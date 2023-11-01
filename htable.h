@@ -96,6 +96,15 @@ char* ht_get(HTable *table, char* key) {
     return item->value;
 }
 
+void ht_delete(HTable *table, char* key) {
+    Item *item = ht_find_item(table, key);
+    if (item == NULL) return;
+
+    free(item);
+    item = NULL;
+    table->items[ht_fnv_hash(key, table->size)] = NULL;
+}
+
 void ht_free_table(HTable *table) {
     free(table->items);
     free(table);
