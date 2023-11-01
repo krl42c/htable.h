@@ -12,11 +12,11 @@ Example usage:
 
 
 ```c
-HTable *hash_table = create_hash_table(50); 
-Item *item = create_item("test", "test_value");
+HTable *hash_table = ht_create_hash_table(50); 
+Item *item = ht_create_item("test", "test_value");
 
-insert(hash_table, item);
+ht_insert(hash_table, item);
 
-char* found_item = get(hash_table, "test");
+char* found_item = ht_get(hash_table, "test");
 printf("found item: %s", found_item);
 ```
