@@ -26,8 +26,8 @@ typedef struct Item {
 
 Item* ht_create_item(char *key, char *value) {
     Item* item = (Item*) malloc(sizeof(Item));
-    item->key = (char*) malloc(sizeof(key));
-    item->value = (char*) malloc(sizeof(value));
+    item->key = (char*) malloc(strlen(key) + 1);
+    item->value = (char*) malloc(strlen(value) + 1);
 
     strcpy(item->key, key);
     strcpy(item->value, value);
