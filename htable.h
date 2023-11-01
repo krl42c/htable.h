@@ -75,20 +75,25 @@ void ht_insert(HTable *table, Item *item) {
 Item* ht_find_item(HTable *table, char* key) {
     uint64_t index = ht_fnv_hash(key, table->size);
     Item *found = table->items[index];
-    
-    if (strcmp(found->key, key)) return found;
+    if (found == NULL) return NULL;
+
+    if (strcmp(found->key, key) == 0) return found;
     
     while (index != table->size) {
         index++;
-        if (strcmp(table->items[index]->key, key)) return table->items[index];
+        if (table->items[index] != NULL) { 
+            if (strcmp(table->items[index]->key, key) == 0) return table->items[index];
+        }
     }
 
     return NULL;
 }
 
 char* ht_get(HTable *table, char* key) {
-    uint64_t index = ht_fnv_hash(key, table->size);
-    return table->items[index]->value;
+    Item *item = ht_find_item(table, key);
+    if (item == NULL) return NULL;
+
+    return item->value;
 }
 
 void ht_free_table(HTable *table) {
