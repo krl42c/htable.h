@@ -1,4 +1,4 @@
 clang \
-    test.c \
+    ht_test.c \
     -o test\
     -Wall -Wextra -Wpedantic\

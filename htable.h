@@ -32,21 +32,23 @@ typedef struct Item {
     char* value;
 } Item;
 
-static Item* ht_create_item(char *key, char *value) {
-    Item* item = (Item*) malloc(sizeof(Item));
+static HT_RESULT ht_create_item(char *key, char *value, Item *item) {
+    item = (Item*) malloc(sizeof(Item));
     item->key = (char*) malloc(strlen(key) + 1);
     item->value = (char*) malloc(strlen(value) + 1);
 
+    if (item == NULL || item->key == NULL || item->value == NULL) return HT_MEM_ERR;
     strcpy(item->key, key);
     strcpy(item->value, value);
 
-    return item;
+    return HT_OK;
 }
 
-static void ht_free_item(Item *item) {
+static HT_RESULT ht_free_item(Item *item) {
     free(item->key);
     free(item->value);
     free(item);
+    return HT_OK;
 }
 
 typedef struct HTable {
@@ -89,32 +91,43 @@ static HT_RESULT ht_insert(HTable *table, Item *item) {
     return HT_OK;
 }
 
-static Item* ht_find_item(HTable *table, char* key) {
+static HT_RESULT ht_find_item(HTable *table, char* key, Item *dest) {
     uint64_t index = ht_fnv_hash(key, table->size);
     Item *found = table->items[index];
-    if (found == NULL) return NULL;
+    if (found == NULL) return HT_ERR;
 
-    if (strcmp(found->key, key) == 0) return found;
+    if (strcmp(found->key, key) == 0) {
+        dest = found;
+        return HT_OK;
+    }
     
     while (index != table->size) {
         index++;
         if (table->items[index] != NULL) { 
-            if (strcmp(table->items[index]->key, key) == 0) return table->items[index];
+            if (strcmp(table->items[index]->key, key) == 0) {
+                dest = table->items[index];
+                return HT_OK;
+            }
         }
     }
 
-    return NULL;
+    return HT_ERR;
 }
 
-static char* ht_get(HTable *table, char* key) {
-    Item *item = ht_find_item(table, key);
-    if (item == NULL) return NULL;
-
-    return item->value;
+static HT_RESULT ht_get(HTable *table, char* key, char* dest) {
+    Item *item;
+    HT_RESULT res = ht_find_item(table, key, item);
+    if (res == HT_ERR) return HT_ERR;
+    if (item == NULL) return HT_ERR;
+    
+    strcpy(key, dest);
+    return HT_OK;
 }
 
-HT_RESULT ht_delete(HTable *table, char* key) {
-    Item *item = ht_find_item(table, key);
+static HT_RESULT ht_delete(HTable *table, char* key) {
+    Item *item;
+    HT_RESULT res = ht_find_item(table, key, item);
+    if (res == HT_ERR) return HT_ERR;
     if (item == NULL) return HT_ERR;
 
     ht_free_item(item);
@@ -122,7 +135,19 @@ HT_RESULT ht_delete(HTable *table, char* key) {
     return HT_OK;
 }
 
-static void ht_free_table(HTable *table) {
+static HT_RESULT ht_free_table(HTable *table) {
     free(table->items);
     free(table);
+    return HT_OK;
+}
+
+static HT_RESULT ht_put(HTable *table, char* key, char *value) {
+    Item *item; 
+    HT_RESULT res = ht_create_item(key,value,item);
+    if (res != HT_OK) return res;
+
+    res = ht_insert(table, item);
+    if (res != HT_OK) return res;
+    
+    return HT_OK;
 }
