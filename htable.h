@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 // FNV-1 hash: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
 uint64_t ht_fnv_hash(char *data, size_t size) {
@@ -18,6 +19,13 @@ uint64_t ht_fnv_hash(char *data, size_t size) {
 
     return hash % size;
 }
+
+typedef enum HT_RESULT {
+    HT_OK = 0,
+    HT_MEM_ERR = 1,
+    HT_ERR = 2,
+    HT_DUP_KEY = 3
+} HT_RESULT; 
 
 typedef struct Item {
     char* key;
@@ -54,22 +62,31 @@ HTable* ht_create_hash_table(size_t size) {
     return table;
 }
 
-void ht_insert(HTable *table, Item *item) {
+static HT_RESULT ht_insert(HTable *table, Item *item) {
+    bool has_inserted = false;
     uint64_t index = ht_fnv_hash(item->key, table->size);
     if (table->items[index] == NULL) {
         table->items[index] = item;
+        has_inserted = true;
     } else {
         if (strcmp(table->items[index]->key, item->key) != 0)  {
-            // Open-Addressing collision soloving: Find first empty slot
+            // Open-Addressing collision solving: Find first empty slot
             while (index != table->size) {
                 index++;     
                 if (table->items[index] == NULL) {
                     table->items[index] = item;
+                    has_inserted = true;
                     break;
                 }
             }
+        } else {
+            return HT_DUP_KEY;
         }
     }
+
+    if (!has_inserted) return HT_ERR;
+
+    return HT_OK;
 }
 
 Item* ht_find_item(HTable *table, char* key) {
@@ -100,8 +117,8 @@ void ht_delete(HTable *table, char* key) {
     Item *item = ht_find_item(table, key);
     if (item == NULL) return;
 
-    free(item);
-    item = NULL;
+    //free(item);
+    ht_free_item(item);
     table->items[ht_fnv_hash(key, table->size)] = NULL;
 }
 

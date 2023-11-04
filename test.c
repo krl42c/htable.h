@@ -24,7 +24,13 @@ int main(void) {
     fp = fopen("test_keys.txt", "r");
     while ((read = getline(&line, &len, fp) != -1)) {
         Item *garbage = ht_create_item(line, "val");
-        ht_insert(hash_table, garbage);
+        HT_RESULT res = ht_insert(hash_table, garbage);
+        if (res == HT_DUP_KEY ) {
+            printf("Failed to insert record (duplicate key): %s", garbage->key);
+        }
+        if (res == HT_ERR || res == HT_MEM_ERR) {
+            printf("Failed to insert record (unknown error): %s", garbage->key);
+        }
     }
 
     Item *item = ht_create_item("test", "test_value");
@@ -65,7 +71,7 @@ int main(void) {
     printf("Expecting value " MAG "[test_value_5]" RESET ", found: " GRN "[%s]\n" RESET, ht_get(hash_table,"test_5"));
 
     printf("-----------------------------------------------\n");
-    printf("Testing collision: gMPflVXtwGDXbIhP73TX=VALUE1 and LtHf1prlU1bCeYZEdqWf=VALUE2\n");
+    printf("Testing collision: gMPflVXtwGDXbIhP73TX and LtHf1prlU1bCeYZEdqWf\n");
 
     Item *col1 = ht_create_item("gMPflVXtwGDXbIhP73TX", "COL 1");
     Item *col2 = ht_create_item("LtHf1prlU1bCeYZEdqWf", "COL 2");
@@ -76,10 +82,17 @@ int main(void) {
     char* colide_val1 = ht_get(hash_table, "gMPflVXtwGDXbIhP73TX");
     char* colide_val2 = ht_get(hash_table, "LtHf1prlU1bCeYZEdqWf");
 
-    printf("Expected collide value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 1", colide_val1);
-    printf("Expected collide value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 2", colide_val2);
+    printf("Expected value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 1", colide_val1);
+    printf("Expected value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 2", colide_val2);
 
     printf("-----------------------------------------------\n");
+    printf("Delete test\n");
+
+    ht_delete(hash_table, "gMPflVXtwGDXbIhP73TX");
+
+    char* deleted = ht_get(hash_table, "gMPflVXtwGDXbIhP73TX");
+    if (deleted == NULL) printf("Element deleted correctly\n");
+
     ht_free_item(item);
     ht_free_table(hash_table);
 
