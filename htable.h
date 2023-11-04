@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 // FNV-1 hash: https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function
-uint64_t ht_fnv_hash(char *data, size_t size) {
+static inline uint64_t ht_fnv_hash(char *data, size_t size) {
     uint64_t fnv_offset_basis = 0xcbf29ce484222325;
     uint64_t fnv_prime = 0x100000001b3;
 
@@ -32,7 +32,7 @@ typedef struct Item {
     char* value;
 } Item;
 
-Item* ht_create_item(char *key, char *value) {
+static Item* ht_create_item(char *key, char *value) {
     Item* item = (Item*) malloc(sizeof(Item));
     item->key = (char*) malloc(strlen(key) + 1);
     item->value = (char*) malloc(strlen(value) + 1);
@@ -43,7 +43,7 @@ Item* ht_create_item(char *key, char *value) {
     return item;
 }
 
-void ht_free_item(Item *item) {
+static void ht_free_item(Item *item) {
     free(item->key);
     free(item->value);
     free(item);
@@ -89,7 +89,7 @@ static HT_RESULT ht_insert(HTable *table, Item *item) {
     return HT_OK;
 }
 
-Item* ht_find_item(HTable *table, char* key) {
+static Item* ht_find_item(HTable *table, char* key) {
     uint64_t index = ht_fnv_hash(key, table->size);
     Item *found = table->items[index];
     if (found == NULL) return NULL;
@@ -106,23 +106,23 @@ Item* ht_find_item(HTable *table, char* key) {
     return NULL;
 }
 
-char* ht_get(HTable *table, char* key) {
+static char* ht_get(HTable *table, char* key) {
     Item *item = ht_find_item(table, key);
     if (item == NULL) return NULL;
 
     return item->value;
 }
 
-void ht_delete(HTable *table, char* key) {
+HT_RESULT ht_delete(HTable *table, char* key) {
     Item *item = ht_find_item(table, key);
-    if (item == NULL) return;
+    if (item == NULL) return HT_ERR;
 
-    //free(item);
     ht_free_item(item);
     table->items[ht_fnv_hash(key, table->size)] = NULL;
+    return HT_OK;
 }
 
-void ht_free_table(HTable *table) {
+static void ht_free_table(HTable *table) {
     free(table->items);
     free(table);
 }
