@@ -24,7 +24,8 @@ typedef enum HT_RESULT {
     HT_OK = 0,
     HT_MEM_ERR = 1,
     HT_ERR = 2,
-    HT_DUP_KEY = 3
+    HT_DUP_KEY = 3,
+    HT_NOT_FOUND = 4
 } HT_RESULT; 
 
 typedef struct Item {
@@ -32,6 +33,7 @@ typedef struct Item {
     char* value;
 } Item;
 
+/* creates item from key value pair*/
 static Item* ht_create_item(char *key, char *value) {
     Item* item = (Item*) malloc(sizeof(Item));
     item->key = (char*) malloc(strlen(key) + 1);
@@ -84,10 +86,14 @@ static HT_RESULT ht_insert(HTable *table, Item *item) {
         }
     }
 
-    if (!has_inserted) return HT_ERR;
-
+    if (!has_inserted) {
+        return HT_ERR;
+    }
+    
+    table->count += 1;
     return HT_OK;
 }
+
 
 static Item* ht_find_item(HTable *table, char* key) {
     uint64_t index = ht_fnv_hash(key, table->size);
@@ -106,11 +112,28 @@ static Item* ht_find_item(HTable *table, char* key) {
     return NULL;
 }
 
+static HT_RESULT ht_update(HTable *table, char* key, char* new_value) {
+    Item *found = ht_find_item(table, key);
+    if (found == NULL) return HT_NOT_FOUND;
+
+    strcpy(found->value, new_value);
+    return HT_OK;
+}
+
 static char* ht_get(HTable *table, char* key) {
     Item *item = ht_find_item(table, key);
     if (item == NULL) return NULL;
 
     return item->value;
+}
+
+static HT_RESULT ht_put(HTable *table, char *key, char *value) {
+    Item *item = ht_create_item(key, value);
+
+    HT_RESULT res = ht_insert(table, item);
+    if (res != HT_OK) return res;
+
+    return HT_OK;
 }
 
 HT_RESULT ht_delete(HTable *table, char* key) {

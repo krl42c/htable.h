@@ -82,8 +82,11 @@ int main(void) {
     char* colide_val1 = ht_get(hash_table, "gMPflVXtwGDXbIhP73TX");
     char* colide_val2 = ht_get(hash_table, "LtHf1prlU1bCeYZEdqWf");
 
+    char* colide_val1_again = ht_get(hash_table, "gMPflVXtwGDXbIhP73TX");
+
     printf("Expected value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 1", colide_val1);
-    printf("Expected value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 2", colide_val2);
+    printf("Expected value: " MAG " [%s]" RESET ", got "GRN" [%s] " RESET "\n", "COL 2", colide_val2);
+    //printf("Expected value: " MAG " [%s] " RESET ", got "GRN" [%s] " RESET "\n", "COL 1", colide_val1_again);
 
     printf("-----------------------------------------------\n");
     printf("Delete test\n");
@@ -93,9 +96,16 @@ int main(void) {
     char* deleted = ht_get(hash_table, "gMPflVXtwGDXbIhP73TX");
     if (deleted == NULL) printf("Element deleted correctly\n");
 
-    ht_free_item(item);
-    ht_free_table(hash_table);
+    printf("-----------------------------------------------\n");
+    printf("Update test\n");
 
+    ht_insert(hash_table, ht_create_item("to_update", "before update"));
+
+    ht_update(hash_table, "to_update", "after update");
+
+    printf("Expected value: " MAG " [after update] " RESET ", got "GRN" [%s] " RESET "\n", ht_get(hash_table, "to_update"));
+
+    ht_free_table(hash_table);
 
     return 0;
 }
